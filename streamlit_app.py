@@ -1,5 +1,5 @@
 """
-Запуск streamlit run app_streamlit.py
+Запуск streamlit run streamlit_app.py
 """
 import json
 import tempfile
