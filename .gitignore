@@ -5,3 +5,7 @@ output
 corpus.jsonl
 processed.jsonl
 tokenization_metrics.csv
+**/*.aux
+**/*.log
+**/*.out
+**/*.toc
