@@ -10,3 +10,4 @@ tokenization_metrics.csv
 **/*.out
 **/*.toc
 processed_corpus.jsonl
+vectorization_metrics.csv
