@@ -33,19 +33,19 @@ one_hot_vectorizer = CountVectorizer(
     binary=True
 )
 one_hot_matrix = one_hot_vectorizer.fit_transform(corpus)
-
-print("=== One-Hot Encoding ===")
+#убрать ==== и разреженность убрать 1 -
+print("One-Hot Encoding")
 print("Размерность:", one_hot_matrix.shape)
-print("Разреженность:", 1.0 - (one_hot_matrix.nnz / np.prod(one_hot_matrix.shape)))
+print("Разреженность:", (one_hot_matrix.nnz / np.prod(one_hot_matrix.shape)))
 print(pd.DataFrame(one_hot_matrix.toarray(), columns=one_hot_vectorizer.get_feature_names_out()))
 
 #Bag of Words
 bow_vectorizer = CountVectorizer(ngram_range=(1, 3))
 bow_matrix = bow_vectorizer.fit_transform(corpus)
 
-print("\n=== Bag of Words (частоты) ===")
+print("\nBag of Words")
 print("Размерность:", bow_matrix.shape)
-print("Разреженность:", 1.0 - (bow_matrix.nnz / np.prod(bow_matrix.shape)))
+print("Разреженность:", (bow_matrix.nnz / np.prod(bow_matrix.shape)))
 print(pd.DataFrame(bow_matrix.toarray(), columns=bow_vectorizer.get_feature_names_out()))
 
 #TF-IDF
@@ -58,7 +58,7 @@ tfidf_matrix = tfidf_vectorizer.fit_transform(corpus)
 
 print("\nTF-IDF")
 print("Размерность:", tfidf_matrix.shape)
-print("Разреженность:", 1.0 - (tfidf_matrix.nnz / np.prod(tfidf_matrix.shape)))
+print("Разреженность:", (tfidf_matrix.nnz / np.prod(tfidf_matrix.shape)))
 print(pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out()).round(3))
 
 #Анализ признаков
