@@ -5,6 +5,7 @@ from gensim.utils import simple_preprocess
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import PCA
 import umap
+import os
 import pandas as pd
 import numpy as np
 import networkx as nx
