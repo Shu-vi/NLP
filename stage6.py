@@ -94,6 +94,9 @@ def sim_axios(str1, str2, model, words):
 model_w2v = get_word_2_vec(sentences, 100, 5, 5, SKIPGRAM)
 model_fasttext = get_fast_text(sentences, 100, 5, 5, SKIPGRAM)
 model_doc2vec = get_doc_2_vec(tagged_docs, 100, 5, 5, PVDM, 20)
+model_w2v.save("./models/word2vec.model")
+model_fasttext.save("./models/fasttext.model")
+model_doc2vec.save("./models/doc2vec.model")
 #семантическое сходство
 print("Сходство 'путин'–'президент':", model_w2v.wv.similarity("путин", "президент"))
 print("Сходство 'путин'–'президент':", model_fasttext.wv.similarity("путин", "президент"))
