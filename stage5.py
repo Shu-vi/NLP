@@ -97,7 +97,7 @@ def human_grade(model):
     pairs = [
         ("москва", "россия", 9.5),
         ("париж", "франция", 9.4),
-        ("киев", "украина", 9.5),
+        ("киев", "украина", 9.3),
         ("дом", "книга", 1.0),
         ("кошка", "собака", 4.1)
     ]
@@ -176,4 +176,4 @@ for vector in VECTOR_SIZES:
             print("Модель doc2vec версия pv-dbow")
             model, t = measure_time(get_doc_2_vec, tagged_docs, vector, window, min_count, PVDBOW, 20)
             weight = measure_mem(model, PVDBOW)
-            print(f"Время выполнения {t} мс, вес модели {weight} мб")
+            print(f"Время выполнения {t} мс, вес модели {weight} мб\n")
