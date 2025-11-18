@@ -7,10 +7,8 @@ from bs4 import BeautifulSoup
 import spacy
 from spacy.language import Language
 from tqdm import tqdm
-import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-from sentence_transformers import SentenceTransformer
 
 
 # -----------------------------------
@@ -91,20 +89,6 @@ def preprocess_text(raw_html: str, nlp: Language) -> str:
     return " ".join(tokens)
 
 
-# -----------------------------------
-# Embedding
-# -----------------------------------
-class EmbeddingModel:
-    def __init__(self, model_name: str = SBERT_MODEL_NAME):
-        self.model = SentenceTransformer(model_name)
-
-    def embed(self, texts: List[str]) -> np.ndarray:
-        return self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
-
-
-# -----------------------------------
-# Crawling helpers
-# -----------------------------------
 def collect_articles_from_site(site_url: str, max_articles: int = MAX_ARTICLES_PER_SITE) -> List[str]:
     try:
         paper = build(site_url, memoize_articles=False, language="ru")
@@ -157,7 +141,6 @@ def build_dataset(seed_sites: List[str],
 
     nlp = spacy.load("ru_core_news_md", disable=["ner"])
     sentiment = RussianSentiment()
-    embedder = EmbeddingModel()
     count_classes = {
         "positive": 1,
         "negative": 1
