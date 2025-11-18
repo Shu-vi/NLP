@@ -4,8 +4,11 @@ from gensim.models import Word2Vec, FastText, Doc2Vec
 from gensim.utils import simple_preprocess
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import PCA
-import umap
+import numba
+numba.config.CACHE_DIR = '/tmp/numba_cache'
+numba.config.DISABLE_CACHING = False
 import os
+import umap
 import pandas as pd
 import numpy as np
 import networkx as nx
