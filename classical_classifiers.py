@@ -4,59 +4,77 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score, f1_score
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
+import tensorflow as tf
+from tensorflow.keras.layers import TextVectorization
+from tensorflow.keras import layers, models
+import numpy as np
+from datasets import Dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
 
-# #======================================================
-# #====классические алгоритмы. бинарная классификация====
+#======считывание всех датасетов====================
 df = pd.read_json("news_ru_binary.jsonl", lines=True)
-
 texts_binary = df["text"].tolist()
 labels_binary = df["sentiment"].tolist()
-# X_train, X_test, y_train, y_test = train_test_split(texts_binary, labels_binary, test_size=0.2)
+labels_binary = np.array([0 if label == "negative" else 1 for label in labels_binary])
 #
-# model = Pipeline([
-#     ('tfidf', TfidfVectorizer(max_features=50000, ngram_range=(1,2))),
-#     ('clf', LogisticRegression(max_iter=500))
-# ])
-#
-# model.fit(X_train, y_train)
-# pred = model.predict(X_test)
-# print(classification_report(y_test, pred))
-# #===Мультиклассовая классификация===
 df = pd.read_json("news_ru_category.jsonl", lines=True)
-
 texts_category = df["text"].tolist()
 labels_category = df["category"].tolist()
-# X_train, X_test, y_train, y_test = train_test_split(texts_category, labels_category, test_size=0.2)
+labels_category = [
+    0 if label == "политика"
+    else 1 if label == "экономика"
+    else 2 if label == "спорт"
+    else 3 if label == "культура"
+    else -1
+    for label in labels_category
+]
+num_classes_category = len(set(labels_category))
 #
-# model = Pipeline([
-#     ('tfidf', TfidfVectorizer(max_features=50000, ngram_range=(1,2))),
-#     ('clf', LinearSVC())
-# ])
-#
+df = pd.read_json("news_ru_categorys.jsonl", lines=True)
+texts_categorys = df["text"].tolist()
+labels_categorys = df["category"].tolist()
+mlb = MultiLabelBinarizer()
+labels_categorys = mlb.fit_transform(labels_categorys)
+num_tags_categorys = labels_categorys.shape[1]
+labels_categorys = labels_categorys.astype(np.float32).tolist()
+
+
+#======================================================
+#====классические алгоритмы. бинарная классификация====
+X_train, X_test, y_train, y_test = train_test_split(texts_binary, labels_binary, test_size=0.2)
+
+model = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=50000, ngram_range=(1,2))),
+    ('clf', LogisticRegression(max_iter=500))
+])
+
 # model.fit(X_train, y_train)
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred))
-#
-#
-# #===мультилейбл классификация===
-df = pd.read_json("news_ru_categorys.jsonl", lines=True)
 
-texts_categorys = df["text"].tolist()
-labels_categorys = df["category"].tolist()
-#
-# mlb = MultiLabelBinarizer()
-# labels_categorys = mlb.fit_transform(labels_categorys)
-#
-# X_train, X_test, y_train, y_test = train_test_split(texts_categorys, labels_categorys, test_size=0.2)
-#
-# model = Pipeline([
-#     ('tfidf', TfidfVectorizer(max_features=60000, ngram_range=(1,2))),
-#     ('clf', OneVsRestClassifier(LinearSVC()))
-# ])
-#
+#===Мультиклассовая классификация===
+X_train, X_test, y_train, y_test = train_test_split(texts_category, labels_category, test_size=0.2)
+
+model = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=50000, ngram_range=(1,2))),
+    ('clf', LinearSVC())
+])
+
+# model.fit(X_train, y_train)
+# pred = model.predict(X_test)
+# print(classification_report(y_test, pred))
+
+#===мультилейбл классификация===
+X_train, X_test, y_train, y_test = train_test_split(texts_categorys, labels_categorys, test_size=0.2)
+
+model = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=60000, ngram_range=(1,2))),
+    ('clf', OneVsRestClassifier(LinearSVC()))
+])
+
 # model.fit(X_train, y_train)
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred, target_names=mlb.classes_))
@@ -64,11 +82,6 @@ labels_categorys = df["category"].tolist()
 #===================================================
 #=====================нейронки=====================
 #==========================================binary===
-import tensorflow as tf
-from tensorflow.keras.layers import TextVectorization
-from tensorflow.keras import layers, models
-import numpy as np
-
 max_tokens = 50000
 max_len = 300
 
@@ -78,12 +91,8 @@ vectorizer = TextVectorization(
     output_sequence_length=max_len
 )
 
-# texts — список строк
 vectorizer.adapt(texts_binary)
-
 X = vectorizer(texts_binary)
-# y — бинарные метки 0/1
-y = np.array([0 if label == "negative" else 1 for label in labels_binary])
 
 model = models.Sequential([
     layers.Embedding(max_tokens, 128),
@@ -98,7 +107,7 @@ model.compile(
     metrics=["accuracy", tf.keras.metrics.AUC()]
 )
 
-# model.fit(X, y, epochs=30, batch_size=32, validation_split=0.2)
+# model.fit(X, labels_binary, epochs=30, batch_size=32, validation_split=0.2)
 #========category=====================================
 vectorizer = TextVectorization(
     max_tokens=max_tokens,
@@ -106,28 +115,17 @@ vectorizer = TextVectorization(
     output_sequence_length=max_len
 )
 
-# texts — список строк
 vectorizer.adapt(texts_category)
-
 X = vectorizer(texts_category)
 
-labels_category = [
-    0 if label == "политика"
-    else 1 if label == "экономика"
-    else 2 if label == "спорт"
-    else 3 if label == "культура"
-    else -1
-    for label in labels_category
-]
-num_classes = len(set(labels_category))      # после LabelEncoder
-y = tf.keras.utils.to_categorical(labels_category, num_classes)
+y = tf.keras.utils.to_categorical(labels_category, num_classes_category)
 
 model = models.Sequential([
     layers.Embedding(max_tokens, 64),
     layers.Conv1D(64, 5, activation="relu"),
     layers.GlobalMaxPooling1D(),
     layers.Dense(64, activation="relu"),
-    layers.Dense(num_classes, activation="softmax")
+    layers.Dense(num_classes_category, activation="softmax")
 ])
 
 model.compile(
@@ -135,9 +133,7 @@ model.compile(
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
-
-# model.fit(X, y, epochs=300, batch_size=32, validation_split=0.2)
-
+# model.fit(X, y, epochs=30, batch_size=32, validation_split=0.2)
 
 #=====categorys========================================
 vectorizer = TextVectorization(
@@ -146,22 +142,15 @@ vectorizer = TextVectorization(
     output_sequence_length=max_len
 )
 
-# texts — список строк
 vectorizer.adapt(texts_categorys)
-
 X = vectorizer(texts_categorys)
-
-mlb = MultiLabelBinarizer()
-labels_categorys = mlb.fit_transform(labels_categorys)
-# Y — матрица (samples, num_tags), 0/1
-num_tags = labels_categorys.shape[1]
 
 inputs = layers.Input(shape=(max_len,))
 x = layers.Embedding(max_tokens, 128)(inputs)
 x = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(x)
 x = layers.GlobalMaxPooling1D()(x)
 x = layers.Dense(128, activation="relu")(x)
-outputs = layers.Dense(num_tags, activation="sigmoid")(x)
+outputs = layers.Dense(num_tags_categorys, activation="sigmoid")(x)
 
 model = models.Model(inputs, outputs)
 
@@ -170,34 +159,24 @@ model.compile(
     loss="binary_crossentropy",
     metrics=[tf.keras.metrics.AUC(curve="PR"), "accuracy"]
 )
-
 # model.fit(X, labels_categorys, epochs=300, batch_size=32, validation_split=0.2)
+
 #===================================================
 #=====================трансформеры=================
 #=================binary============================
-from datasets import Dataset
-from sklearn.metrics import accuracy_score, f1_score
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
-
-df = pd.read_json("news_ru_binary.jsonl", lines=True)
-
-dataset = Dataset.from_pandas(df)
+dataset_bin = Dataset.from_dict({
+    "text": texts_binary,
+    "labels": labels_binary
+})
 
 label2id = {"negative": 0, "positive": 1}
 id2label = {0: "negative", 1: "positive"}
 
-def encode_binary(batch):
-    batch["label"] = label2id[batch["sentiment"]]
-    return batch
-
-dataset_bin = dataset.map(encode_binary)
-
-train_test = dataset_bin.train_test_split(test_size=0.2)
+train_test = dataset_bin.train_test_split(test_size=0.2, shuffle=True, seed=42)
 train = train_test["train"]
 test = train_test["test"]
 
-model_name = "cointegrated/rubert-tiny"  # очень быстрый
-
+model_name = "cointegrated/rubert-tiny"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 def tokenize(batch):
@@ -210,7 +189,6 @@ def tokenize(batch):
 
 train_tok = train.map(tokenize, batched=True)
 test_tok = test.map(tokenize, batched=True)
-
 train_tok.set_format("torch")
 test_tok.set_format("torch")
 
@@ -220,7 +198,6 @@ model = AutoModelForSequenceClassification.from_pretrained(
     id2label=id2label,
     label2id=label2id
 )
-
 args = TrainingArguments(
     output_dir="./binary_model",
     logging_strategy="epoch",
@@ -230,44 +207,39 @@ args = TrainingArguments(
     per_device_eval_batch_size=16,
     num_train_epochs=100
 )
-
 trainer = Trainer(
     model=model,
     args=args,
     train_dataset=train_tok,
     eval_dataset=test_tok
 )
-
-trainer.train()
+# trainer.train()
 
 #======category==================================
-df = pd.read_json("news_ru_category.jsonl", lines=True)
+dataset = Dataset.from_dict({
+    "text": texts_category,
+    "labels": labels_category
+})
 
-dataset = Dataset.from_pandas(df)
+unique_labels = sorted(set(labels_category))
+id2label = {i: str(i) for i in unique_labels}
+label2id = {str(i): i for i in unique_labels}
 
-unique = sorted(set(df["category"]))
-label2id = {label: i for i, label in enumerate(unique)}
-id2label = {i: label for label, i in label2id.items()}
-
-def encode_multi(batch):
-    batch["label"] = label2id[batch["category"]]
-    return batch
-
-dataset_mc = dataset.map(encode_multi)
-train_test = dataset_mc.train_test_split(test_size=0.2)
+train_test = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
 train = train_test["train"]
 test = train_test["test"]
 
 train_tok = train.map(tokenize, batched=True)
 test_tok = test.map(tokenize, batched=True)
+train_tok.set_format("torch")
+test_tok.set_format("torch")
 
 model = AutoModelForSequenceClassification.from_pretrained(
     model_name,
-    num_labels=len(unique),
+    num_labels=num_classes_category,
     id2label=id2label,
     label2id=label2id
 )
-
 args = TrainingArguments(
     output_dir="./category_model",
     logging_strategy="epoch",
@@ -277,14 +249,12 @@ args = TrainingArguments(
     per_device_eval_batch_size=16,
     num_train_epochs=100
 )
-
 trainer = Trainer(
     model=model,
     args=args,
     train_dataset=train_tok,
     eval_dataset=test_tok
 )
-
 # trainer.train()
 #
 # preds = trainer.predict(test_tok)
@@ -297,31 +267,18 @@ trainer = Trainer(
 # print("Accuracy:", accuracy)
 
 #=======================categorys=============
-df = pd.read_json("news_ru_categorys.jsonl", lines=True)
+dataset = Dataset.from_dict({
+    "text": texts_categorys,
+    "labels": labels_categorys
+})
 
-mlb = MultiLabelBinarizer()
-binarized = mlb.fit_transform(df["category"])
-
-df["labels"] = binarized.astype(np.float32).tolist()
-
-dataset_ml = Dataset.from_pandas(df)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-def tokenize(batch):
-    return tokenizer(
-        batch["text"],
-        padding="max_length",
-        truncation=True,
-        max_length=256
-    )
-
-dataset_ml = dataset_ml.map(tokenize, batched=True)
-dataset_ml = dataset_ml.train_test_split(test_size=0.2)
-train = dataset_ml["train"]
-test = dataset_ml["test"]
-
+dataset = dataset.map(tokenize, batched=True)
+dataset = dataset.train_test_split(test_size=0.2)
+train = dataset["train"]
+test = dataset["test"]
 train.set_format("torch")
 test.set_format("torch")
+
 
 model = AutoModelForSequenceClassification.from_pretrained(
     model_name,
@@ -335,15 +292,14 @@ args = TrainingArguments(
     learning_rate=3e-3,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
-    num_train_epochs=100
+    num_train_epochs=10
 )
 
-# trainer = Trainer(
-#     model=model,
-#     args=args,
-#     train_dataset=train,
-#     eval_dataset=test
-# )
-#
-# trainer.train()
+trainer = Trainer(
+    model=model,
+    args=args,
+    train_dataset=train,
+    eval_dataset=test
+)
 
+trainer.train()
