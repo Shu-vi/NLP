@@ -12,6 +12,7 @@ from tensorflow.keras.layers import TextVectorization
 from tensorflow.keras import layers, models
 import numpy as np
 from datasets import Dataset
+from joblib import dump
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
 
 #======считывание всех датасетов====================
@@ -39,7 +40,7 @@ labels_categorys = df["category"].tolist()
 mlb = MultiLabelBinarizer()
 labels_categorys = mlb.fit_transform(labels_categorys)
 num_tags_categorys = labels_categorys.shape[1]
-labels_categorys = labels_categorys.astype(np.float32).tolist()
+# labels_categorys = labels_categorys.astype(np.float32).tolist()
 
 
 #======================================================
@@ -51,7 +52,8 @@ model = Pipeline([
     ('clf', LogisticRegression(max_iter=500))
 ])
 
-# model.fit(X_train, y_train)
+model.fit(X_train, y_train)
+dump(model, "ml_binary.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred))
 
@@ -63,7 +65,8 @@ model = Pipeline([
     ('clf', LinearSVC())
 ])
 
-# model.fit(X_train, y_train)
+model.fit(X_train, y_train)
+dump(model, "ml_category.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred))
 
@@ -75,7 +78,8 @@ model = Pipeline([
     ('clf', OneVsRestClassifier(LinearSVC()))
 ])
 
-# model.fit(X_train, y_train)
+model.fit(X_train, y_train)
+dump(model, "ml_categorys.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred, target_names=mlb.classes_))
 
@@ -107,7 +111,9 @@ model.compile(
     metrics=["accuracy", tf.keras.metrics.AUC()]
 )
 
-# model.fit(X, labels_binary, epochs=30, batch_size=32, validation_split=0.2)
+model.fit(X, labels_binary, epochs=30, batch_size=32, validation_split=0.2)
+model.save("nn_binary.keras")
+
 #========category=====================================
 vectorizer = TextVectorization(
     max_tokens=max_tokens,
@@ -133,7 +139,8 @@ model.compile(
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
-# model.fit(X, y, epochs=30, batch_size=32, validation_split=0.2)
+model.fit(X, y, epochs=30, batch_size=32, validation_split=0.2)
+model.save("nn_category.keras")
 
 #=====categorys========================================
 vectorizer = TextVectorization(
@@ -159,7 +166,8 @@ model.compile(
     loss="binary_crossentropy",
     metrics=[tf.keras.metrics.AUC(curve="PR"), "accuracy"]
 )
-# model.fit(X, labels_categorys, epochs=300, batch_size=32, validation_split=0.2)
+model.fit(X, labels_categorys, epochs=30, batch_size=32, validation_split=0.2)
+model.save("nn_categorys.keras")
 
 #===================================================
 #=====================трансформеры=================
@@ -301,5 +309,4 @@ trainer = Trainer(
     train_dataset=train,
     eval_dataset=test
 )
-
-trainer.train()
+# trainer.train()
