@@ -12,3 +12,6 @@ tokenization_metrics.csv
 корпусы с других лаб/processed_corpus.jsonl
 vectorization_metrics.csv
 news_ru*
+binary_model
+category_model
+multilabel_model
