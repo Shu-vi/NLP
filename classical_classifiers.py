@@ -52,8 +52,8 @@ model = Pipeline([
     ('clf', LogisticRegression(max_iter=500))
 ])
 
-model.fit(X_train, y_train)
-dump(model, "ml_binary.joblib")
+# model.fit(X_train, y_train)
+# dump(model, "ml_binary.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred))
 
@@ -65,8 +65,8 @@ model = Pipeline([
     ('clf', LinearSVC())
 ])
 
-model.fit(X_train, y_train)
-dump(model, "ml_category.joblib")
+# model.fit(X_train, y_train)
+# dump(model, "ml_category.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred))
 
@@ -78,8 +78,8 @@ model = Pipeline([
     ('clf', OneVsRestClassifier(LinearSVC()))
 ])
 
-model.fit(X_train, y_train)
-dump(model, "ml_categorys.joblib")
+# model.fit(X_train, y_train)
+# dump(model, "ml_categorys.joblib")
 # pred = model.predict(X_test)
 # print(classification_report(y_test, pred, target_names=mlb.classes_))
 
@@ -96,6 +96,7 @@ vectorizer = TextVectorization(
 )
 
 vectorizer.adapt(texts_binary)
+tf.keras.models.save_model(vectorizer, "nn_vectorizer_binary.keras")
 X = vectorizer(texts_binary)
 
 model = models.Sequential([
@@ -111,7 +112,7 @@ model.compile(
     metrics=["accuracy", tf.keras.metrics.AUC()]
 )
 
-model.fit(X, labels_binary, epochs=30, batch_size=32, validation_split=0.2)
+model.fit(X, labels_binary, epochs=60, batch_size=32, validation_split=0.2)
 model.save("nn_binary.keras")
 
 #========category=====================================
@@ -122,6 +123,7 @@ vectorizer = TextVectorization(
 )
 
 vectorizer.adapt(texts_category)
+tf.keras.models.save_model(vectorizer, "nn_vectorizer_category.keras")
 X = vectorizer(texts_category)
 
 y = tf.keras.utils.to_categorical(labels_category, num_classes_category)
@@ -139,7 +141,7 @@ model.compile(
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
-model.fit(X, y, epochs=30, batch_size=32, validation_split=0.2)
+model.fit(X, y, epochs=60, batch_size=32, validation_split=0.2)
 model.save("nn_category.keras")
 
 #=====categorys========================================
@@ -150,6 +152,7 @@ vectorizer = TextVectorization(
 )
 
 vectorizer.adapt(texts_categorys)
+tf.keras.models.save_model(vectorizer, "nn_vectorizer_categorys.keras")
 X = vectorizer(texts_categorys)
 
 inputs = layers.Input(shape=(max_len,))
@@ -166,7 +169,7 @@ model.compile(
     loss="binary_crossentropy",
     metrics=[tf.keras.metrics.AUC(curve="PR"), "accuracy"]
 )
-model.fit(X, labels_categorys, epochs=30, batch_size=32, validation_split=0.2)
+model.fit(X, labels_categorys, epochs=60, batch_size=32, validation_split=0.2)
 model.save("nn_categorys.keras")
 
 #===================================================
