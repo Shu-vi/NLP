@@ -15,7 +15,11 @@ def predict_sentiment():
     )
     def _inner(text: str):
         pred = clf(text)
-        return pred[0]["label"]
+        res = {
+            "labels": pred[0]["label"],
+            "probs": pred[0]["score"]
+        }
+        return res
     return _inner
 
 def predict_category():
@@ -31,7 +35,21 @@ def predict_category():
     )
     def _inner(text: str):
         pred = clf(text)
-        return pred[0]["label"]
+        labels = {"политика": 0, "экономика": 0, "спорт": 0, "культура": 0, pred[0]["label"]: pred[0]["score"]}
+        classes = [
+            "политика",
+            "экономика",
+            "спорт",
+            "культура"
+        ]
+        new_labels = []
+        for cl in classes:
+            new_labels.append(labels[cl])
+        res = {
+            "labels": classes,
+            "probs": new_labels
+        }
+        return res
 
     return _inner
 
@@ -57,8 +75,12 @@ def predict_categorys():
         )
         with torch.no_grad():
             logits = model(**input).logits
-        probs = torch.sigmoid(logits).squeeze()
-        pred_ids = (probs > 0.5).nonzero().flatten().tolist()
-        return [classes[i] for i in pred_ids]
+        probs = torch.sigmoid(logits).squeeze().tolist()
+        res = {
+            "labels": classes,
+            "probs": probs
+        }
+        return res
+
 
     return _inner
