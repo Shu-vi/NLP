@@ -17,3 +17,6 @@ category_model
 multilabel_model
 ml*
 nn*
+test.jsonl
+docs/report.pdf
+docs/report.tex
