@@ -14,7 +14,11 @@ def predict_sentiment():
         return_all_scores=False
     )
     def _inner(text: str):
-        pred = clf(text)
+        words = text.split()
+        truncated_text = ""
+        if len(words) > 400:
+            truncated_text = ' '.join(words[:400])
+        pred = clf(truncated_text)
         res = {
             "labels": pred[0]["label"],
             "probs": pred[0]["score"]
@@ -34,7 +38,11 @@ def predict_category():
         return_all_scores=False
     )
     def _inner(text: str):
-        pred = clf(text)
+        words = text.split()
+        truncated_text = ""
+        if len(words) > 400:
+            truncated_text = ' '.join(words[:400])
+        pred = clf(truncated_text)
         labels = {"политика": 0, "экономика": 0, "спорт": 0, "культура": 0, pred[0]["label"]: pred[0]["score"]}
         classes = [
             "политика",
