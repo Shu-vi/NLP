@@ -5,7 +5,7 @@ def create_tfidf():
     vectorizer = joblib.load("tfidf_vectorizer.pkl")
     def _inner(docs):
         return vectorizer.transform(docs).toarray()
-    return _inner
+    return _inner, vectorizer  # возвращаем и функцию, и векторaйзер
 
 def create_w2v():
     model = Word2Vec.load("./word2vec.model")
@@ -14,7 +14,7 @@ def create_w2v():
             return model.wv[word]
         else:
             return None
-    return _inner
+    return _inner, model  # возвращаем и функцию, и модель
 
 def create_fasttext():
     model = FastText.load("./fasttext.model")
@@ -23,4 +23,4 @@ def create_fasttext():
             return model.wv[word]
         else:
             return None
-    return _inner
+    return _inner, model  # возвращаем и функцию, и модель
